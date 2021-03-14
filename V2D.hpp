@@ -7,7 +7,6 @@
 	#pragma error "Header file at '"__FILE__"' requires a c++20 enabled compiler, with concepts, to compile."
 #endif
 #include <concepts>
-
 #include <math.h>
 #include <numbers>
 #include <string>
