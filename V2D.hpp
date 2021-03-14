@@ -365,12 +365,12 @@ namespace ink {
 		{ return std::atan2(static_cast<long double>(y),static_cast<long double>(x)); }
 		
 		// Dot product
-		public: template<arithmetic t> constexpr decltype( std::declval<T>() * std::declval<t>() )
+		public: template<typename t> requires( operable<t> ) constexpr decltype( std::declval<T>() * std::declval<t>() )
 		dot(const V2D<t>& other) const
 		{ return x * other.x + y * other.y; }
 		
 		// Cross product
-		public: template<arithmetic t> constexpr decltype( std::declval<T>() * std::declval<t>() )
+		public: template<typename t> requires( operable<t> ) constexpr decltype( std::declval<T>() * std::declval<t>() )
 		cross(const V2D<t>& other) const
 		{ return x * other.y - y * other.x; }
 		
@@ -410,12 +410,12 @@ namespace ink {
 			return out;
 		}
 		
-		public: constexpr T
-		projection_mag(const V2D& other) const
+		public: template<typename t> requires( operable<t> ) constexpr auto
+		projection_mag(V2D<t> const& other) const
 		{ return dot(other) / other.magnitude(); }
 		
-		public: constexpr V2D
-		projection_vec(const V2D& other) const
+		public: template<typename t> requires( operable<t> ) constexpr auto
+		projection_vec(V2D<t> const& other) const
 		{ return other.normalize() * projection_mag(other); }
 		
 		
