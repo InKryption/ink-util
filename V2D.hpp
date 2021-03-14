@@ -195,7 +195,7 @@ namespace ink {
 			// Subtraction operators
 			
 			public: template<typename t> requires( operable<t> ) friend constexpr auto
-			operator-(V2D const& lhs, V2D const& rhs)
+			operator-(V2D const& lhs, V2D<t> const& rhs)
 			{ return V2D<decltype(lhs.x - rhs.x)>(lhs.x - rhs.x, lhs.y - rhs.y); }
 			
 			public: template<typename t> requires( operable<t> ) constexpr V2D&
