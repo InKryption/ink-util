@@ -270,54 +270,85 @@ namespace ink {
 		};
 		
 		public: constexpr auto
-		BeginCol()
+		beginCol()
 		{ return Iterator<std::remove_reference_t<decltype(*this)>, true>(*this, 0); }
 		
 		public: constexpr auto
-		BeginRow()
+		beginRow()
 		{ return Iterator<std::remove_reference_t<decltype(*this)>, false>(*this, 0); }
 		
 		public: constexpr auto
-		EndCol()
+		endCol()
 		{ return Iterator<std::remove_reference_t<decltype(*this)>, true>(*this, COLS); }
 		
 		public: constexpr auto
-		EndRow()
+		endRow()
 		{ return Iterator<std::remove_reference_t<decltype(*this)>, false>(*this, ROWS); }
 		
+		// Iterate over the underlying array sequentially. Use the begin(Row/Col) and end(Row/Col) to iterate over slices,
+		// which can be further iterated over themselves.
+		public: constexpr auto
+		begin()
+		{ return M_data; }
 		
+		// Iterate over the underlying array sequentially. Use the begin(Row/Col) and end(Row/Col) to iterate over slices,
+		// which can be further iterated over themselves.
+		public: constexpr auto
+		end() const
+		{ return M_data + (SIZE); }
 		
+		// Iterate over the underlying array sequentially. Use the begin(Row/Col) and end(Row/Col) to iterate over slices,
+		// which can be further iterated over themselves.
+		public: constexpr auto
+		rbegin()
+		{ return M_data + (SIZE - 1); }
+		
+		// Iterate over the underlying array sequentially. Use the begin(Row/Col) and end(Row/Col) to iterate over slices,
+		// which can be further iterated over themselves.
+		public: constexpr auto
+		rend() const
+		{ return M_data - 1; }
+		
+		// Get column number 'i'.
 		public: constexpr auto
 		GetCol(size_t i)
 		{ return Slice<std::remove_reference_t<decltype(*this)>, true>(*this, i); }
 		
+		// Get column number 'i'.
 		public: constexpr auto
 		GetCol(size_t i) const
 		{ return Slice<std::remove_reference_t<decltype(*this)>, true>(*this, i); }
 		
+		// Get row number 'i'.
 		public: constexpr auto
 		GetRow(size_t i)
 		{ return Slice<std::remove_reference_t<decltype(*this)>, false>(*this, i); }
 		
+		// Get row number 'i'
 		public: constexpr auto
 		GetRow(size_t i) const
 		{ return Slice<std::remove_reference_t<decltype(*this)>, false>(*this, i); }
 		
+		// Get element at positional index of the form {column, row}.
 		public: constexpr auto&
 		operator[](std::initializer_list<size_t> col_row)
 		{ return M_data[IndexAbs( col_row.begin()[0] , col_row.begin()[1] )]; }
 		
+		// Get element at positional index of the form {column, row}.
 		public: constexpr auto&
 		operator[](std::initializer_list<size_t> col_row) const
 		{ return M_data[IndexAbs( col_row.begin()[0] , col_row.begin()[1] )]; }
 		
-		public: constexpr auto
+		// Get element at the absolute index number 'i'.
+		// Use 'GetRow()' or 'GetCol()' to get an indexable slice to a Row or Column, respectively.
+		public: constexpr auto&
 		operator[](size_t i)
-		{ return GetCol(i); }
+		{ return M_data[i]; }
 		
-		public: constexpr auto
+		// Get element at the absolute index number 'i'.
+		public: constexpr auto&
 		operator[](size_t i) const
-		{ return GetCol(i); }
+		{ return M_data[i]; }
 		
 		private: T
 		M_data[SIZE];
