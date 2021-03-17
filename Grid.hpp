@@ -274,15 +274,7 @@ namespace ink {
 		{ return Iterator<std::remove_reference_t<decltype(*this)>, true>(*this, 0); }
 		
 		public: constexpr auto
-		BeginCol() const
-		{ return Iterator<std::remove_reference_t<decltype(*this)>, true>(*this, 0); }
-		
-		public: constexpr auto
 		BeginRow()
-		{ return Iterator<std::remove_reference_t<decltype(*this)>, false>(*this, 0); }
-		
-		public: constexpr auto
-		BeginRow() const
 		{ return Iterator<std::remove_reference_t<decltype(*this)>, false>(*this, 0); }
 		
 		public: constexpr auto
@@ -290,15 +282,7 @@ namespace ink {
 		{ return Iterator<std::remove_reference_t<decltype(*this)>, true>(*this, COLS); }
 		
 		public: constexpr auto
-		EndCol() const
-		{ return Iterator<std::remove_reference_t<decltype(*this)>, true>(*this, COLS); }
-		
-		public: constexpr auto
 		EndRow()
-		{ return Iterator<std::remove_reference_t<decltype(*this)>, false>(*this, ROWS); }
-		
-		public: constexpr auto
-		EndRow() const
 		{ return Iterator<std::remove_reference_t<decltype(*this)>, false>(*this, ROWS); }
 		
 		
