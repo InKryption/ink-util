@@ -1,14 +1,11 @@
 #ifndef INK_UTILITY_GRID_CLASS_HEADER_FILE_GUARD
 #define INK_UTILITY_GRID_CLASS_HEADER_FILE_GUARD
 
-#include <cstdint>
-#include <numeric>
-#include <span>
+#include <initializer_list>
 
 namespace ink {
-	
 	template<typename T, size_t Width, size_t Height = Width>
-	requires( (Width - Height) <= std::numeric_limits<size_t>::max() && Width >= 1 && Height >= 1 )
+	requires( (0 < Width * Height) && (Width * Height >= Width) && (Width * Height >= Height) )
 	class Grid {
 		
 		private: enum
@@ -52,8 +49,8 @@ namespace ink {
 		
 		// Default constructor
 		public: constexpr
-		Grid() requires (std::is_default_constructible_v<T>):
-		M_data() {}
+		Grid() requires ( std::is_default_constructible_v<T> ):
+		{ M_data = std::initializer_list<T>{}; }
 		
 		// Copy constructor
 		public: constexpr
@@ -75,10 +72,10 @@ namespace ink {
 		Grid(std::initializer_list<T> list)
 		{ std::copy(list.begin(), list.begin() + list.size(), M_data); }
 		
-		// Span constructor. Every N contiguous element will be part of a row, where N is the number of columns.
-		public: constexpr
-		Grid(std::span<T, SIZE> const& span)
-		{ std::copy(span.begin(), span.end(), M_data); }
+		public: template<typename iterator>
+		constexpr
+		Grid()
+		{  }
 		
 		// 2D Array Constructor. Works as expected.
 		public: constexpr
@@ -305,19 +302,19 @@ namespace ink {
 		SliceView = IterationImpl<_t, isCol>::SliceView;
 		
 		public: constexpr auto
-		ColView()
+		ViewCol()
 		{ return SliceView<std::remove_reference_t<decltype(*this)> , true>(this); }
 		
 		public: constexpr auto
-		ColView() const
+		ViewCol() const
 		{ return SliceView<std::remove_reference_t<decltype(*this)> , true>(this); }
 		
 		public: constexpr auto
-		RowView()
+		ViewRow()
 		{ return SliceView<std::remove_reference_t<decltype(*this)> , false>(this); }
 		
 		public: constexpr auto
-		RowView() const
+		ViewRow() const
 		{ return SliceView<std::remove_reference_t<decltype(*this)> , false>(this); }
 		
 		// Iterate over the underlying array sequentially. Use the begin(Row/Col) and end(Row/Col) to iterate over slices,
@@ -329,7 +326,7 @@ namespace ink {
 		// Iterate over the underlying array sequentially. Use the begin(Row/Col) and end(Row/Col) to iterate over slices,
 		// which can be further iterated over themselves.
 		public: constexpr auto
-		end() const
+		end()
 		{ return M_data + (SIZE); }
 		
 		// Iterate over the underlying array sequentially. Use the begin(Row/Col) and end(Row/Col) to iterate over slices,
