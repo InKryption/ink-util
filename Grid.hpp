@@ -1,6 +1,7 @@
 #ifndef INK_UTILITY_GRID_CLASS_HEADER_FILE_GUARD
 #define INK_UTILITY_GRID_CLASS_HEADER_FILE_GUARD
 
+#include <cstdint>
 #include <numeric>
 #include <span>
 
@@ -86,204 +87,238 @@ namespace ink {
 			std::copy(arr2d, arr2d + SIZE, M_data);
 		}
 		
-		private: template<typename,bool>struct Iterator;
-		
-		private: template<typename _t, bool isCol>
-		struct Slice {
+		private: template<typename _t, bool isCol> struct IterationImpl {
+			struct Slice;
+			struct SliceIterator;
+			struct SliceView;
 			
-			public: constexpr auto&
-			operator[](size_t i)
-			{
-				if constexpr(isCol)		return M_grid[{M_section, i}];
-				if constexpr(!isCol)	return M_grid[{i, M_section}];
-			}
-			
-			private: constexpr
-			Slice(Slice const&) = default;
-			
-			private: constexpr
-			Slice(Slice &&) = default;
-			
-			private: constexpr
-			Slice(_t& grid, size_t i):
-			M_grid(grid), M_section(i) {}
-			
-			
-			private: struct Iterator {
-				using value_type = std::remove_reference_t<decltype(Slice(std::declval<Grid&>(),0).operator[](0))>;
+			struct Slice {
+				friend class Grid;
+				friend struct SliceIterator;
+				friend struct SliceView;
+				
+				private: static constexpr size_t LEN = isCol ? COLS : ROWS;
+				
+				public: constexpr auto&
+				operator[](size_t i)
+				{
+					if constexpr(isCol)	return (*M_grid)[{M_section, i}];
+					if constexpr(!isCol)	return (*M_grid)[{i, M_section}];
+				}
+				
+				public: constexpr Slice(Slice const&) = default;
+				public: constexpr Slice(Slice &&) = default;
+				private: constexpr Slice(_t* grid, size_t i):
+				M_grid(grid), M_section(i) {}
+				
+				private: struct Iterator;
+				
+				public: constexpr auto
+				begin()
+				{ return Iterator(this, 0); }
+				
+				public: constexpr auto
+				end()
+				{ return Iterator(this, LEN); }
+				
+				private: struct Iterator {
+					friend struct Slice;
+					using value_type = std::remove_reference_t<decltype(Slice(nullptr,0)[0])>;
+					using reference = value_type&;
+					using pointer = value_type*;
+					using difference_type = std::ptrdiff_t;
+					using iterator_category = std::bidirectional_iterator_tag;
+					
+					public: constexpr bool
+					operator==(Iterator const& other) const
+					{ return M_curr == other.M_curr; }
+					
+					public: constexpr bool
+					operator!=(Iterator const& other) const
+					{ return !(*this == other); }
+					
+					
+					
+					public: constexpr reference
+					operator*()
+					{ return (*M_slice)[M_curr]; }
+					
+					public: constexpr pointer
+					operator->()
+					{ return &((*M_slice)[M_curr]); }
+					
+					
+					
+					public: constexpr Iterator
+					operator+(difference_type i)
+					{ return Iterator(M_slice, M_curr + i); }
+					
+					public: constexpr Iterator
+					operator-(difference_type i)
+					{ return (*this) + (-i); }
+					
+					public: constexpr Iterator
+					operator++(int)
+					{ return Iterator(M_slice, M_curr++); }
+					
+					public: constexpr Iterator&
+					operator++()
+					{ M_curr++; return *this; }
+					
+					public: constexpr Iterator
+					operator--(int)
+					{ return Iterator(M_slice, M_curr--); }
+					
+					public: constexpr Iterator&
+					operator--()
+					{ M_curr--; return *this; }
+					
+					public: constexpr Iterator&
+					operator+=(difference_type i)
+					{ M_curr += i; return *this; }
+					
+					public: constexpr Iterator&
+					operator-=(difference_type i)
+					{ M_curr -= i; return *this; }
+					
+					
+					
+					private: Iterator(Slice* slice, size_t i):
+					M_slice(slice), M_curr(i) {}
+					
+					private: Slice*
+					M_slice{nullptr};
+					
+					private: size_t
+					M_curr = 0;
+					
+				};
+				private: _t*
+				M_grid{nullptr};
+				
+				private: size_t
+				M_section{0};
+				
+			};
+				
+			struct SliceIterator {
+				friend class Grid;
+				friend struct SliceView;
+				
+				using value_type = Slice;
 				using reference = value_type&;
 				using pointer = value_type*;
 				using difference_type = std::ptrdiff_t;
 				using iterator_category = std::bidirectional_iterator_tag;
 				
 				public: constexpr bool
-				operator!=(Iterator const& other) const
-				{ return M_curr != other.M_curr; }
+				operator==(SliceIterator const& other) const
+				{ return M_slice.M_section == other.M_slice.M_section; }
 				
 				public: constexpr bool
-				operator==(Iterator const& other) const
-				{ return M_curr == other.M_curr; }
+				operator!=(SliceIterator const& other) const
+				{ return !(*this == other); }
 				
-				public: constexpr reference 
+				public: constexpr reference
 				operator*()
-				{ return (*M_slice)[M_curr]; }
+				{ return M_slice; }
 				
 				public: constexpr pointer
 				operator->()
-				{ return &((*M_slice)[M_curr]); }
+				{ return &M_slice; }
 				
-				public: constexpr Iterator
+				public: constexpr auto
 				operator+(difference_type i)
-				{ return Iterator(M_slice, M_curr + i); }
+				{ return SliceIterator(M_slice.M_grid, M_slice.M_section + i); }
 				
-				public: constexpr Iterator
+				public: constexpr auto
 				operator-(difference_type i)
 				{ return (*this) + (-i); }
 				
-				public: constexpr Iterator
+				public: constexpr auto
 				operator++(int)
-				{ return Iterator(M_slice, M_curr++); }
+				{ return SliceIterator(M_slice.M_grid, M_slice.M_section++); }
 				
-				public: constexpr Iterator&
+				public: constexpr auto&
 				operator++()
-				{ M_curr++; return *this; }
+				{ M_slice.M_section++; return *this; }
 				
-				public: constexpr Iterator
+				public: constexpr auto
 				operator--(int)
-				{ return Iterator(M_slice, M_curr--); }
+				{ return SliceIterator(M_slice.M_grid, M_slice.M_section--); }
 				
-				public: constexpr Iterator&
+				public: constexpr auto&
 				operator--()
-				{ M_curr--; return *this; }
+				{ M_slice.M_section--; return *this; }
 				
-				public: constexpr Iterator&
+				public: constexpr auto&
 				operator+=(difference_type i)
-				{ M_curr += i; return *this; }
+				{ M_slice.M_section += i; return *this; }
 				
-				public: constexpr Iterator&
+				public: constexpr auto&
 				operator-=(difference_type i)
-				{ M_curr -= i; return *this; }
+				{ M_slice.M_section -= i; return *this; }
 				
-				private: friend
-				class Slice;
+				private: constexpr
+				SliceIterator(_t* grid, size_t i):
+				M_slice(grid, i) {}
 				
-				private: Iterator(Slice* slice, size_t i):
-				M_slice(slice), M_curr(i) {}
-				
-				private: Slice*
-				M_slice{nullptr};
-				
-				private: size_t
-				M_curr = 0;
-				
+				private: Slice
+				M_slice;
 			};
 			
-			public: constexpr auto
-			begin()
-			{ return Iterator(this, 0); }
-			
-			public: constexpr auto
-			end()
-			{ return Iterator(this, (isCol) ? COLS : ROWS ); }
-			
-			private: friend
-			class Grid;
-			
-			public: template<typename,bool> friend
-			struct Grid::Iterator;
-			
-			private: _t&
-			M_grid;
-			
-			private: size_t
-			M_section = 0;
+			struct SliceView {
+				friend class Grid;
+				
+				private: static constexpr size_t LEN = isCol ? COLS : ROWS;
+				
+				public: constexpr auto
+				begin()
+				{ return SliceIterator(M_grid, 0); }
+				
+				public: constexpr auto
+				end()
+				{ return SliceIterator(M_grid, LEN); }
+				
+				public: constexpr auto
+				rbegin()
+				{ return end() - 1; }
+				
+				public: constexpr auto
+				rend()
+				{ return begin() - 1; }
+				
+				private: constexpr
+				SliceView(_t* grid):
+				M_grid(grid) {}
+				
+				private: _t*
+				M_grid;
+			};
 			
 		};
 		
-		private: template<typename _t, bool isCol>
-		struct Iterator {
-			using sliceT = Slice<_t, isCol>;
-			
-			using value_type = sliceT;
-			using reference = value_type&;
-			using pointer = value_type*;
-			using difference_type = std::ptrdiff_t;
-			using iterator_category = std::bidirectional_iterator_tag;
-			
-			public: constexpr bool
-			operator!=(Iterator const& other) const
-			{ return M_slice.M_section != other.M_slice.M_section; }
-			
-			public: constexpr bool
-			operator==(Iterator const& other) const
-			{ return M_slice.M_section == other.M_slice.M_section; }
-			
-			public: constexpr reference
-			operator*()
-			{ return M_slice; }
-			
-			public: constexpr pointer
-			operator->()
-			{ return &M_slice; }
-			
-			public: constexpr Iterator
-			operator+(difference_type i)
-			{ return Iterator(M_slice.M_grid, M_slice.M_section + i); }
-			
-			public: constexpr Iterator
-			operator-(difference_type i)
-			{ return (*this) + (-i); }
-			
-			public: constexpr Iterator
-			operator++(int)
-			{ return Iterator(M_slice.M_grid, M_slice.M_section++); }
-			
-			public: constexpr Iterator&
-			operator++()
-			{ M_slice.M_section++; return *this; }
-			
-			public: constexpr Iterator
-			operator--(int)
-			{ return Iterator(M_slice.M_grid, M_slice.M_section--); }
-			
-			public: constexpr Iterator&
-			operator--()
-			{ M_slice.M_section--; return *this; }
-			
-			public: constexpr Iterator&
-			operator+=(difference_type i)
-			{ M_slice.M_section += i; return *this; }
-			
-			public: constexpr Iterator&
-			operator-=(difference_type i)
-			{ M_slice.M_section -= i; return *this; }
-			
-			private: constexpr
-			Iterator(_t& grid, size_t i):
-			M_slice(grid, i) {}
-			
-			private: friend
-			class Grid;
-			
-			private: sliceT
-			M_slice;
-		};
+		private: template<typename _t, bool isCol> using
+		Slice = IterationImpl<_t, isCol>::Slice;
+		
+		private: template<typename _t, bool isCol> using
+		SliceView = IterationImpl<_t, isCol>::SliceView;
 		
 		public: constexpr auto
-		beginCol()
-		{ return Iterator<std::remove_reference_t<decltype(*this)>, true>(*this, 0); }
+		ColumnView()
+		{ return SliceView<std::remove_reference_t<decltype(*this)> , true>(this); }
 		
 		public: constexpr auto
-		beginRow()
-		{ return Iterator<std::remove_reference_t<decltype(*this)>, false>(*this, 0); }
+		ColumnView() const
+		{ return SliceView<std::remove_reference_t<decltype(*this)> , true>(this); }
 		
 		public: constexpr auto
-		endCol()
-		{ return Iterator<std::remove_reference_t<decltype(*this)>, true>(*this, COLS); }
+		RowView()
+		{ return SliceView<std::remove_reference_t<decltype(*this)> , false>(this); }
 		
 		public: constexpr auto
-		endRow()
-		{ return Iterator<std::remove_reference_t<decltype(*this)>, false>(*this, ROWS); }
+		RowView() const
+		{ return SliceView<std::remove_reference_t<decltype(*this)> , false>(this); }
 		
 		// Iterate over the underlying array sequentially. Use the begin(Row/Col) and end(Row/Col) to iterate over slices,
 		// which can be further iterated over themselves.
@@ -312,22 +347,22 @@ namespace ink {
 		// Get column number 'i'.
 		public: constexpr auto
 		GetCol(size_t i)
-		{ return Slice<std::remove_reference_t<decltype(*this)>, true>(*this, i); }
+		{ return Slice<std::remove_reference_t<decltype(*this)>, true>(this, i); }
 		
 		// Get column number 'i'.
 		public: constexpr auto
 		GetCol(size_t i) const
-		{ return Slice<std::remove_reference_t<decltype(*this)>, true>(*this, i); }
+		{ return Slice<std::remove_reference_t<decltype(*this)>, true>(this, i); }
 		
 		// Get row number 'i'.
 		public: constexpr auto
 		GetRow(size_t i)
-		{ return Slice<std::remove_reference_t<decltype(*this)>, false>(*this, i); }
+		{ return Slice<std::remove_reference_t<decltype(*this)>, false>(this, i); }
 		
 		// Get row number 'i'
 		public: constexpr auto
 		GetRow(size_t i) const
-		{ return Slice<std::remove_reference_t<decltype(*this)>, false>(*this, i); }
+		{ return Slice<std::remove_reference_t<decltype(*this)>, false>(this, i); }
 		
 		// Get element at positional index of the form {column, row}.
 		public: constexpr auto&
