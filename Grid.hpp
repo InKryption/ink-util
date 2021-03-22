@@ -1,6 +1,7 @@
 #ifndef INK_UTILITY_GRID_CLASS_HEADER_FILE_GUARD
 #define INK_UTILITY_GRID_CLASS_HEADER_FILE_GUARD
 
+#include <cstddef>
 #include <initializer_list>
 
 namespace ink {
