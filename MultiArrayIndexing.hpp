@@ -1,21 +1,45 @@
 #ifndef INK_MUTLI_ARRAY_INDEXING_HEADER_FILE_GUARD
 #define INK_MUTLI_ARRAY_INDEXING_HEADER_FILE_GUARD
 
-	#include <cstddef>
+#include <cstddef>
+#include <concepts>
+#include <tuple>
+
+namespace ink {	
+	namespace detail::MultiArrayIndexing {
+		
+		template<typename... i> struct Transpose_impl {
+			
+		};
+	
+	}
 	
 	/**
-	 *	@param dimension_sizes Sizes corresponding to the sizes of the arrays to sub-arrays in-order.
-	 *	@param indexes Indexes corresponding to the absolute index of interest.
-	 *	@return The absolute index corresponding to the supplied indexes based off of the dimension_sizes.
+	 * @brief This functions generates and returns a (constexpr) lambda based off of the specified dimensions,
+	 * which itself is a function which generates an absolute index from multiple dimensional indexes.
+	 * 
+	 * @param dimension_sizes
+	 * These parameters (this parameter pack) represent the dimensions of, e.g., an array (albeit in reverse order).
+	 * So the correspondence would be of the form | int[HEIGHT,WIDTH] | f(WIDTH,HEIGHT) |.
+	 * 
+	 * @return The returned lambda takes the same number of arguments as dimension_sizes supplied to the generator function.
+	 * Each index argument represents an index into the dimension of the same position, and as such is expected to
+	 * be less than the size of said dimension (index is out-of-bounds otherwise).
+	 * 
+	 * i.e. take a 2D array | int[2][3] |, and map it to a 1D array | int[6] |, with each element,
+	 * beginning from zero, being an increment of the prior integer | {{0,1,2},{3,4,5}} |
+	 * 
+	 * 
 	 */
-	template<size_t... dimension_sizes> static constexpr auto
-	TransposeToAbsolute(decltype(dimension_sizes)... indexes)
+	template<typename... i> requires(std::convertible_to<i,size_t>&&...) static constexpr auto
+	TransposeToAbsolute(i... dimension_sizes)
 	{
-		
-		size_t	out = 0,
-				factor = 1;
-		((	out += (indexes * factor)	,	factor *= dimension_sizes	),...);
-		return out;
+		return [=](i... indexes) constexpr {
+			size_t	out = 0,
+					factor = 1;
+			((	out += (indexes * factor)	,	factor *= dimension_sizes	),...);
+			return out;
+		};
 	}
 	
 	/**
@@ -33,5 +57,6 @@
 		
 		return std::make_tuple( lambda(dimension_sizes)... );
 	}
-	
+}
+
 #endif
