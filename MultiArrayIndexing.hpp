@@ -26,9 +26,8 @@ namespace ink {
 	 * Each index argument represents an index into the dimension of the same position, and as such is expected to
 	 * be less than the size of said dimension (index is out-of-bounds otherwise).
 	 * 
-	 * i.e. take a 2D array | int[2][3] |, and map it to a 1D array | int[6] |, with each element,
-	 * beginning from zero, being an increment of the prior integer | {{0,1,2},{3,4,5}} |
-	 * 
+	 * i.e. take a 2D array | int arr2D[2][3] |, and map it to a 1D array | int arr1D[6] |.
+	 * The mapping using this function would be like of the form | auto lambda = f(3,2); arr2D[1,2] == arr1D[lambda(1,2)] |.
 	 * 
 	 */
 	template<typename... i> requires(std::convertible_to<i,size_t>&&...) static constexpr auto
