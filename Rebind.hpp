@@ -25,20 +25,14 @@ namespace ink::rebind {
 		template<typename Concrete> struct
 		pack_impl;
 		
-		template<typename TypeList, template<typename...> typename Template> struct
-		unpack_types_impl;
+		template<typename List> struct
+		unpack_impl;
 		
-		template<typename ValueList, template<auto...> typename Template> struct
-		unpack_values_impl;
-		
-		template<typename TypeList, typename Concrete> struct
+		template<typename List> struct
 		emplace_impl;
 		
-		template<typename TypeList1, typename TypeList2> struct
+		template<typename TypeList1> struct
 		concat_impl;
-		
-		template<size_t TypeIndex, typename TypeList> struct
-		get_type_impl;
 		
 		template<size_t TypeIndex> struct
 		what_is_impl;
@@ -71,20 +65,14 @@ namespace ink::rebind {
 		template<typename Concrete> using
 		pack = Invoke< pack_impl<Concrete> >;
 		
-		template<typename TypeList, template<typename...> typename Template> using
-		unpack_types = Invoke< unpack_types_impl<TypeList, Template> >;
+		template<typename List> using
+		unpack = Invoke< unpack_impl<List> >;
 		
-		template<typename ValueList, template<auto...> typename Template> using
-		unpack_values = Invoke< unpack_values_impl<ValueList, Template> >;
+		template<typename List> using
+		emplace = Invoke< emplace_impl<List> >;
 		
-		template<typename TypeList, typename Concrete> using
-		emplace = Invoke< emplace_impl<TypeList, Concrete> >;
-		
-		template<typename TypeList1, typename TypeList2> using
-		concat = Invoke< concat_impl<TypeList1, TypeList2> >;
-		
-		template<size_t TypeIndex, typename TypeList> using
-		get_type = Invoke< get_type_impl<TypeIndex, TypeList> >;
+		template<typename List> using
+		concat = Invoke< concat_impl<List> >;
 		
 		template<size_t TypeIndex> using
 		what_is = Invoke< what_is_impl<TypeIndex> >;
@@ -120,13 +108,13 @@ namespace ink::rebind {
 				type = type_list_impl;
 				
 				template<template<typename...> typename Template> using
-				unpack = unpack_types<type, Template>;
+				unpack_into = typename unpack<type>::into<Template>;
 				
 				template<typename Concrete> using
-				emplace = emplace<type, Concrete>;
+				emplace_onto = typename emplace<type>::onto<Concrete>;
 				
-				template<typename rhs_TypeList> using
-				concat = concat<type, rhs_TypeList>;
+				template<typename TypeList> using
+				concat_with = typename concat<type>::with<TypeList>;
 				
 				template<size_t TypeIndex> using
 				get = typename what_is<TypeIndex>::in<type>;
@@ -166,7 +154,13 @@ namespace ink::rebind {
 				using type_list = type_list<decltype(V)...>;
 				
 				template<template<auto...> typename Template> using
-				unpack = unpack_values<type, Template>;
+				unpack_into = typename unpack<type>::into<Template>;
+				
+				template<typename Concrete> using
+				emplace_onto = typename emplace<type>::onto<Concrete>;
+				
+				template<size_t ValueIndex> using
+				get = typename what_is<ValueIndex>::in<type>;
 				
 				static constexpr auto
 				size = size_of<type>::value;
@@ -190,40 +184,106 @@ namespace ink::rebind {
 			{ using type = value_list<I...>; };
 			
 		/* unpack */
-			// Main usage
-			template<typename... types, template<typename...> typename Template> struct
-			unpack_types_impl<type_list_impl<types...>, Template>
-			{ using type = Template<types...>; };
+			// Type unpacking
+			template<typename... types> struct
+			unpack_impl<type_list_impl<types...>>
+			{
+				using type = unpack_impl;
+				template<template<typename...> typename Template> using
+				into = Template<types...>;
+			};
 			
-		/* unpack_values */
-			// Main usage
-			template<auto... values, template<auto...> typename Template> struct
-			unpack_values_impl<value_list_impl<values...>, Template>
-			{ using type = Template<values...>; };
+			// Value unpacking
+			template<auto... values> struct
+			unpack_impl<value_list_impl<values...>>
+			{
+				using type = unpack_impl;
+				template<template<auto...> typename Template> using
+				into = Template<values...>;
+			};
 			
 		/* emplace */
-			// Main usage
-			template<template<typename...> typename Concrete, typename... types, typename... discard> struct
-			emplace_impl<type_list_impl<types...>, Concrete<discard...>>
-			{ using type = Concrete<types...>; };
+			// Type emplacement
+			template<typename... types> struct
+			emplace_impl<type_list_impl<types...>>
+			{
+				private:
+				template<typename Concrete> struct onto_impl;
+				template<template<typename...> typename Template, typename... discard> struct
+				onto_impl<Template<discard...> >
+				{ using type = Template<types...>; };
+				
+				public:
+				using type = emplace_impl;
+				
+				template<typename Concrete> using
+				onto = Invoke< onto_impl<Concrete> >;
+			};
 			
-			// Main value usage
-			template<template<auto...> typename Concrete, auto... values, auto... discard> struct
-			emplace_impl<value_list_impl<values...>, Concrete<discard...>>
-			{ using type = Concrete<values...>; };
-			
-			// Secondary value usage
-			template<template<typename...> typename Concrete, auto... vals, typename... discard> struct
-			emplace_impl<value_list_impl<vals...>, Concrete<discard...>>
-			{ using type = Concrete<decltype(vals)...>; };
+			// Value emplacement
+			template<auto... values> struct
+			emplace_impl<value_list_impl<values...>>
+			{
+				private:
+				template<typename Concrete> struct onto_impl;
+				template<template<auto...> typename Template, auto... discard> struct
+				onto_impl<Template<discard...> >
+				{ using type = Template<values...>; };
+				
+				public:
+				using type = emplace_impl;
+				
+				template<typename Concrete> using
+				onto = Invoke< onto_impl<Concrete> >;
+				
+			};
 			
 		/* concat */
-			// Main usage
-			template<typename... types1, typename... types2> struct
-			concat_impl<type_list_impl<types1...>, type_list_impl<types2...>>
-			{ using type = type_list<types1..., types2...>; };
+			// Types first concatenation
+			template<typename... types1> struct
+			concat_impl<type_list_impl<types1...>>
+			{
+				private:
+				template<typename List> struct with_impl;
+				template<typename... types2> struct
+				with_impl<type_list_impl<types2...>>
+				{ using type = type_list<types1..., types2...>; };
+				
+				template<auto... values2> struct
+				with_impl<value_list_impl<values2...>>
+				{ using type = value_list<(types1())..., (values2)...>; };
+				
+				public:
+				using type = concat_impl;
+				template<typename List> using
+				with = Invoke< with_impl<List> >;
+				
+			};
+			
+			// Values first concatenation
+			template<auto... values1> struct
+			concat_impl<value_list_impl<(values1)...>>
+			{
+				private:
+				template<typename List> struct with_impl;
+				template<typename... types2> struct
+				with_impl<type_list_impl<types2...>>
+				{ using type = value_list<(values1)..., (types2())...>; };
+				
+				template<auto... values2> struct
+				with_impl<value_list_impl<(values2)...>>
+				{ using type = value_list<(values1)..., (values2)...>; };
+				
+				public:
+				using type = concat_impl;
+				template<typename List> using
+				with = Invoke< with_impl<List> >;
+				
+			};
 			
 		/* get_type */
+			template<size_t TypeIndex, typename TypeList> struct
+			get_type_impl;
 			// This is "main usage", but is more comfortable to use from within what_is, for packing and unpacking syntax
 			template<size_t TypeIndex, typename... types> struct
 			get_type_impl<TypeIndex, type_list_impl<types...>>
@@ -233,7 +293,27 @@ namespace ink::rebind {
 			// Main usage
 			template<size_t TypeIndex> struct
 			what_is_impl
-			{ using type = what_is_impl; template<typename TypeList> using in = get_type<TypeIndex, TypeList>; };
+			{
+				private:
+				template<typename List> struct in_impl;
+				
+				template<typename... types>
+				struct in_impl<type_list_impl<types...>>
+				{ using type = std::tuple_element_t<TypeIndex, std::tuple<types...>>; };
+				
+				template<auto val> struct Value
+				{ static constexpr auto value = val; };
+				
+				template<auto... values>
+				struct in_impl<value_list_impl<(values)...>>
+				{ using type = Value<std::get<TypeIndex>(std::make_tuple(values...))>; };
+				
+				public:
+				using type = what_is_impl;
+				template<typename List> using
+				in = Invoke< in_impl<List> >;
+				
+			};
 			
 		/* reverse */
 			// Main usage
@@ -243,7 +323,7 @@ namespace ink::rebind {
 				using head = type_list<T>;
 				using tail = Invoke< reverse_impl<type_list<Ts...>> >;
 				
-				using type = concat<tail, head>;
+				using type = typename concat<tail>::with<head>;
 				// using type = decltype(std::tuple_cat(std::declval<tail>(), std::declval<head>()));
 			};
 			
@@ -276,9 +356,15 @@ namespace ink::rebind {
 			template<typename Type> struct
 			repeat_impl
 			{
+				private: template<typename> using
+				make = Type;
+				
+				public:
 				using type = repeat_impl;
+				
 				template<size_t N> using
-				times = Invoke< repeat_n_times_impl<N, Type> >;
+				times = typename pack<std::make_index_sequence<N>>::type_list::transform<make>;
+				
 			};
 			
 		/* size_of */
@@ -306,8 +392,8 @@ namespace ink::rebind {
 	
 	using detail::pack;
 	using detail::emplace;
-	using detail::unpack_types;
-	using detail::unpack_values;
+	using detail::unpack;
+	using detail::repeat;
 	
 	using detail::concat;
 	using detail::reverse;
@@ -316,11 +402,10 @@ namespace ink::rebind {
 	using detail::pop_first;
 	using detail::pop_last;
 	
-	using detail::get_type;
 	using detail::what_is;
 	using detail::size_of;
 	
-	using detail::repeat;
+	
 	
 }
 
