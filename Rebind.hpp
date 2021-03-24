@@ -16,7 +16,7 @@ namespace ink::rebind {
 		
 		template<typename> struct pack_list_impl;
 		template<typename T> using
-		pack = typename pack_list_impl<T>::type;
+		unpack = typename pack_list_impl<T>::type;
 		
 		
 		
@@ -28,17 +28,32 @@ namespace ink::rebind {
 		
 		template<typename... T> struct
 		type_list {
+			private:
+			
+			template<typename> struct repack_impl;
+			template<template<typename...> typename C, typename... c>
+			struct repack_impl<C<c...>>
+			{ using type = C<T...>; };
+			
+			public:
 			
 			template<template<typename...> typename B> using
-			unpack = B<T...>;
+			pack = B<T...>;
+			
+			template<typename C> using
+			repack = typename repack_impl<C>::type;
+			
+			
+			using
+			tuple = std::tuple<T...>;
 			
 			template<size_t n> using
-			get = std::tuple_element_t< n, unpack<std::tuple> >;
+			get = std::tuple_element_t<n, std::tuple<T...>>;
 			
 			template<typename U> using
 			concat = concat<type_list,U>;
 			
-			template<template<typename> Trans> using
+			template<template<typename> typename Trans> using
 			transform = type_list<Trans<T>...>;
 			
 			// Number of types in the type list
@@ -49,12 +64,26 @@ namespace ink::rebind {
 		
 		template<auto... T> struct
 		value_list {
+			private:
+			
+			template<typename> struct repack_impl;
+			template<template<auto...> typename C, auto... c>
+			struct repack_impl<C<c...>>
+			{ using type = C<T...>; };
+			
+			public:
 			
 			template<template<auto...> typename B> using
-			unpack = B<T...>;
+			pack = B<T...>;
+			
+			template<typename C> using
+			repack = typename repack_impl<C>::type;
+			
+			static constexpr auto
+			tuple = std::make_tuple(T...);
 			
 			template<size_t n> static constexpr auto
-			get = std::get<n>( std::make_tuple(T...) );
+			get = std::get<n>( tuple );
 			
 			template<typename U> using
 			concat = concat<value_list,U>;
@@ -90,7 +119,7 @@ namespace ink::rebind {
 		
 		
 		
-		template<typename, typename> struct concat_impl;
+		
 		
 		template<typename... a, typename... b> struct
 		concat_impl<type_list<a...>,type_list<b...>>
@@ -100,6 +129,8 @@ namespace ink::rebind {
 		concat_impl<value_list<a...>,value_list<b...>>
 		{ using type = value_list<a...,b...>; };
 		
+		
+		
 	}
 	
 	
@@ -107,7 +138,9 @@ namespace ink::rebind {
 	using detail::value_list;
 	
 	using detail::concat;
-	using detail::pack;
+	using detail::unpack;
+	
+	
 	
 }
 
