@@ -26,7 +26,7 @@ namespace ink::rebind {
 		pack_impl;
 		
 		template<typename TypeList, template<typename...> typename Template> struct
-		unpack_impl;
+		unpack_types_impl;
 		
 		template<typename ValueList, template<auto...> typename Template> struct
 		unpack_values_impl;
@@ -52,8 +52,11 @@ namespace ink::rebind {
 		template<typename TypeList, template<typename> typename Trans> struct
 		transform_impl;
 		
-		template<size_t N> struct
+		template<typename Type> struct
 		repeat_impl;
+		
+		template<typename... Types> struct
+		size_impl;
 		
 		
 		
@@ -69,7 +72,7 @@ namespace ink::rebind {
 		pack = Invoke< pack_impl<Concrete> >;
 		
 		template<typename TypeList, template<typename...> typename Template> using
-		unpack = Invoke< unpack_impl<TypeList, Template> >;
+		unpack_types = Invoke< unpack_types_impl<TypeList, Template> >;
 		
 		template<typename ValueList, template<auto...> typename Template> using
 		unpack_values = Invoke< unpack_values_impl<ValueList, Template> >;
@@ -98,8 +101,11 @@ namespace ink::rebind {
 		template<typename TypeList, template<typename> typename Trans> using
 		transform = Invoke< transform_impl<TypeList,Trans> >;
 		
-		template<size_t N> using
-		repeat = Invoke< repeat_impl<N> >;
+		template<typename Type> using
+		repeat = Invoke< repeat_impl<Type> >;
+		
+		template<typename... Types> using
+		size_of = Invoke< size_impl<Types...> >;
 		
 		
 		
@@ -114,7 +120,7 @@ namespace ink::rebind {
 				type = type_list_impl;
 				
 				template<template<typename...> typename Template> using
-				unpack = unpack<type, Template>;
+				unpack = unpack_types<type, Template>;
 				
 				template<typename Concrete> using
 				emplace = emplace<type, Concrete>;
@@ -134,6 +140,12 @@ namespace ink::rebind {
 				using
 				pop_last = pop_last<type>;
 				
+				template<template<typename> typename Trans> using
+				transform = transform<type, Trans>;
+				
+				static constexpr auto
+				size = size_of<type>::value;
+				
 			};
 			
 			// Specialize for flattening; type_list<type_list<...>> will evaluate to type_list<...>
@@ -151,8 +163,14 @@ namespace ink::rebind {
 			template<auto... V> struct
 			value_list_impl {
 				using type = value_list_impl;
-				
 				using type_list = type_list<decltype(V)...>;
+				
+				template<template<auto...> typename Template> using
+				unpack = unpack_values<type, Template>;
+				
+				static constexpr auto
+				size = size_of<type>::value;
+				
 			};
 			
 		/* pack */
@@ -174,7 +192,7 @@ namespace ink::rebind {
 		/* unpack */
 			// Main usage
 			template<typename... types, template<typename...> typename Template> struct
-			unpack_impl<type_list_impl<types...>, Template>
+			unpack_types_impl<type_list_impl<types...>, Template>
 			{ using type = Template<types...>; };
 			
 		/* unpack_values */
@@ -248,21 +266,37 @@ namespace ink::rebind {
 			
 		/* repeat */
 			
-			template<typename T> struct helper_make
-			{ template<typename U> using from = T; };
-			
 			template<size_t N, typename T> struct repeat_n_times_impl
 			{
-				using type = typename pack<std::make_index_sequence<N>>::type_list::transform<typename helper_make<T>::from>;
+				template<typename> using make = T;
+				using type = typename pack<std::make_index_sequence<N>>::type_list::transform<make>;
 			};
 			
 			// Main usage
-			template<size_t N> struct
+			template<typename Type> struct
 			repeat_impl
 			{
-				
+				using type = repeat_impl;
+				template<size_t N> using
+				times = Invoke< repeat_n_times_impl<N, Type> >;
 			};
-		
+			
+		/* size_of */
+			// Generic usage
+			template<typename... Types> struct
+			size_impl
+			{ using type = size_impl; static constexpr auto value = std::tuple_size_v<std::tuple<Types...>>; };
+			
+			// Packed types usage
+			template<typename... Types> struct
+			size_impl<type_list_impl<Types...>>
+			{ using type = size_of<Types...>; };
+			
+			// Packed values usage
+			template<auto... Values> struct
+			size_impl<value_list_impl<Values...>>
+			{ using type = size_of<decltype(Values)...>; };
+			
 	}
 	
 	// Exposed API
@@ -272,7 +306,7 @@ namespace ink::rebind {
 	
 	using detail::pack;
 	using detail::emplace;
-	using detail::unpack;
+	using detail::unpack_types;
 	using detail::unpack_values;
 	
 	using detail::concat;
@@ -284,9 +318,10 @@ namespace ink::rebind {
 	
 	using detail::get_type;
 	using detail::what_is;
+	using detail::size_of;
 	
-	typename detail::repeat_n_times_impl<5, int>::type f;
-		
+	using detail::repeat;
+	
 }
 
 #endif
