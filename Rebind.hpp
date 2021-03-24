@@ -43,7 +43,7 @@ namespace ink::rebind {
 		template<typename TypeList> struct
 		pop_first_impl;
 		
-		template<typename TypeList, template<typename> typename Trans> struct
+		template<typename List> struct
 		transform_impl;
 		
 		template<typename Type> struct
@@ -86,8 +86,8 @@ namespace ink::rebind {
 		template<typename TypeList> using
 		pop_last = reverse<pop_first<reverse<TypeList>>>;
 		
-		template<typename TypeList, template<typename> typename Trans> using
-		transform = Invoke< transform_impl<TypeList,Trans> >;
+		template<typename List> using
+		transform = Invoke< transform_impl<List> >;
 		
 		template<typename Type> using
 		repeat = Invoke< repeat_impl<Type> >;
@@ -129,7 +129,7 @@ namespace ink::rebind {
 				pop_last = pop_last<type>;
 				
 				template<template<typename> typename Trans> using
-				transform = transform<type, Trans>;
+				transform_with = typename transform<type>::with<Trans>;
 				
 				static constexpr auto
 				size = size_of<type>::value;
@@ -340,9 +340,15 @@ namespace ink::rebind {
 			
 		/* transform */
 			// Main usage
-			template<typename... types, template<typename> typename Trans> struct
-			transform_impl<type_list_impl<types...>,Trans>
-			{ using type = type_list<Trans<types>...>; };
+			template<typename... types> struct
+			transform_impl<type_list_impl<types...>>
+			{
+				public:
+				template<template<typename> typename Trans> using
+				with = type_list<Trans<types>...>;
+				
+				using type = transform_impl;
+			};
 			
 		/* repeat */
 			
@@ -404,8 +410,6 @@ namespace ink::rebind {
 	
 	using detail::what_is;
 	using detail::size_of;
-	
-	
 	
 }
 
