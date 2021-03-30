@@ -5,14 +5,7 @@
 #include <concepts>
 #include <tuple>
 
-namespace ink {	
-	namespace detail::MultiArrayIndexing {
-		
-		template<typename... i> struct Transpose_impl {
-			
-		};
-	
-	}
+namespace ink::Indexing {
 	
 	/**
 	 * @brief This functions generates and returns a (constexpr) lambda based off of the specified dimensions,
