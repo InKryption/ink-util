@@ -1,11 +1,133 @@
 #ifndef INK_UTILITY_2D_VECTOR_CLASS_HEADER_FILE_GUARD
 #define INK_UTILITY_2D_VECTOR_CLASS_HEADER_FILE_GUARD
 
+#include <cstdint>
 #include <utility>
 #include <math.h>
 #include <tuple>
 
 namespace ink {
+	
+	namespace detail {
+		
+		template<typename T> struct Q_rsqrt_impl;
+		
+		template<std::convertible_to<float> T> requires(sizeof(T) <= 4)
+		struct Q_rsqrt_impl<T> {
+			
+			// Originally ripped from Stack Overflow, which was a modified version of Quake III's fast reverse square root function.
+			// Set extra_iterations to 1 or more for increased accuracy, at the cost of some loss in efficiency.
+			static inline float Q_rsqrt(T number, size_t extra_iterations) {
+				
+				constexpr float THREE_HALVES = 1.5F;
+				constexpr auto MAGIC_NUM = 0x5f3759df;
+				
+				uint32_t i;
+				float x2, y;
+				
+				x2 = number * 0.5F;
+				y = number;
+				i = *(uint32_t*)&y;
+				i = MAGIC_NUM - (i >> 1);
+				y = *(float *) &i;
+				
+				y = y * (THREE_HALVES - (x2 * y * y));
+				
+				// Extra iterations if requested.
+				for (size_t n_iteration = 0; n_iteration < extra_iterations; n_iteration++)
+				{ y = y * (THREE_HALVES - (x2 * y * y)); }
+				
+				return y;
+			}
+			
+			static inline float Q_rsqrt(T number) {
+				
+				constexpr float THREE_HALVES = 1.5F;
+				constexpr auto MAGIC_NUM = 0x5f3759df;
+				
+				uint32_t i;
+				float x2, y;
+				
+				x2 = number * 0.5F;
+				y = number;
+				i = *(uint32_t*)&y;
+				i = MAGIC_NUM - (i >> 1);
+				y = *(float *) &i;
+				
+				y = y * (THREE_HALVES - (x2 * y * y));
+				
+				return y;
+			}
+			
+		};
+		
+		template<std::convertible_to<double> T> requires(sizeof(T) > 4)
+		struct Q_rsqrt_impl<T> {
+			
+			// Set extra_iterations to 1 or more for increased accuracy, at the cost of some loss in efficiency.
+			static inline double Q_rsqrt(T number, size_t extra_iterations) {
+				
+				constexpr double THREE_HALVES = 1.5;
+				constexpr auto MAGIC_NUM = 0x5fe6eb50c7b537a9;
+				
+				uint64_t i;
+				double x2, y;
+				
+				x2 = number * 0.5F;
+				y = number;
+				i = *(uint64_t*)&y;
+				i = MAGIC_NUM - (i >> 1);
+				y = *(double *) &i;
+				
+				y = y * (THREE_HALVES - (x2 * y * y));
+				
+				// Extra iterations if requested.
+				for (size_t n_iteration = 0; n_iteration < extra_iterations; n_iteration++)
+				{ y = y * (THREE_HALVES - (x2 * y * y)); }
+				
+				return y;
+			}
+			
+			static inline double Q_rsqrt(T number) {
+				
+				constexpr double THREE_HALVES = 1.5;
+				constexpr auto MAGIC_NUM = 0x5fe6eb50c7b537a9;
+				
+				uint64_t i;
+				double x2, y;
+				
+				x2 = number * 0.5F;
+				y = number;
+				i = *(uint64_t*)&y;
+				i = MAGIC_NUM - (i >> 1);
+				y = *(double *) &i;
+				
+				y = y * (THREE_HALVES - (x2 * y * y));
+				
+				return y;
+			}
+			
+		};
+		
+	}
+	
+	/**
+	 * An implementation of Quake III's Engine's reverse square root function. Supports floats and doubles.
+	 * Set extra_iterations to 1 or more for increased accuracy, at the cost of some loss in efficiency.
+	 */
+	template<typename T> static inline auto
+	Q_rsqrt(T number, size_t extra_iterations)
+	{ return detail::Q_rsqrt_impl<T>::Q_rsqrt(number, extra_iterations); }
+	
+	/**
+	 * An implementation of Quake III's Engine's reverse square root function. Supports floats and doubles.
+	 */
+	template<typename T> static inline auto
+	Q_rsqrt(T number)
+	{ return detail::Q_rsqrt_impl<T>::Q_rsqrt(number); }
+	
+	
+	
 	namespace detail {
 		
 		template<typename XT, typename YT = XT>
@@ -75,6 +197,7 @@ namespace ink {
 				return (x >= 0) && (y <= 0);
 			}
 			
+			
 			// Return this vector rotated 180 degrees
 			public: constexpr auto
 			rotate180() const
@@ -142,6 +265,20 @@ namespace ink {
 			{
 				return (x * other.y) - (y * other.x);
 			}
+			
+			
+			
+			// Dot product
+			public: template<typename otherX, typename otherY = otherX> constexpr auto
+			dot(const Vector2<otherX, otherY>& other) const
+			{ return x * other.x + y * other.y; }
+			
+			// Cross product
+			public: template<typename otherX, typename otherY = otherX> constexpr auto
+			cross(const Vector2<otherX, otherY>& other) const
+			{ return x * other.y - y * other.x; }
+			
+			
 			
 			// Magnitude of the vector squared. Use if the true magnitude of the vector is unimportant, to save doing the square root with magnitude().
 			public: constexpr auto
