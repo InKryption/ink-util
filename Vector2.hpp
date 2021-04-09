@@ -298,7 +298,7 @@ namespace ink {
 			
 			// Normalized version of this vector
 			public: constexpr auto
-			normalize() const requires ( dot_product_exists<> ) &&
+			normalize() const requires( dot_product_exists<> ) &&
 			requires(XT x, YT y)
 			{
 				x = 0;
@@ -310,6 +310,26 @@ namespace ink {
 				auto len = magnitude();
 				Vector2 out(0,0); ( len == 0 )
 				|| ( out = Vector2{ x/len , y/len } , true );
+				return out;
+			}
+			
+			// Normalized version of this vector utilizing an implementation of Q_rsqrt (Quake III's fast reverse square root). Supports increased accuracy at the cost of efficiency.
+			public: inline auto
+			q_normalize(size_t extra_iterations) const requires( dot_product_exists<> )
+			{
+				auto rsqrt = Q_rsqrt<decltype(magnitude2())>(magnitude2(),extra_iterations);
+				Vector2 out(0,0); ( isnan(rsqrt) )
+				|| ( out = Vector2( x * rsqrt , y * rsqrt ), true );
+				return out;
+			}
+			
+			// Normalized version of this vector utilizing an implementation of Q_rsqrt (Quake III's fast reverse square root).
+			public: inline auto
+			q_normalize() const requires( dot_product_exists<> )
+			{
+				auto rsqrt = Q_rsqrt<decltype(magnitude2())>(magnitude2());
+				Vector2 out(0,0); ( isnan(rsqrt) )
+				|| ( out = Vector2( x * rsqrt , y * rsqrt ), true );
 				return out;
 			}
 			
