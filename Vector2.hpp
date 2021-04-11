@@ -154,7 +154,7 @@ namespace ink {
 			x(x), y(y) {}
 			
 			// Returns true if the vector angle pertains to Quadruant 1
-			public: constexpr auto
+			public: constexpr decltype(auto)
 			quadrant1() const
 			requires requires(XT x, YT y)
 			{
@@ -165,7 +165,7 @@ namespace ink {
 			}
 			
 			// Returns true if the vector angle pertains to Quadruant 2
-			public: constexpr auto
+			public: constexpr decltype(auto)
 			quadrant2() const
 			requires requires(XT x, YT y)
 			{
@@ -176,7 +176,7 @@ namespace ink {
 			}
 			
 			// Returns true if the vector angle pertains to Quadruant 3
-			public: constexpr auto
+			public: constexpr decltype(auto)
 			quadrant3() const
 			requires requires(XT x, YT y)
 			{
@@ -187,7 +187,7 @@ namespace ink {
 			}
 			
 			// Returns true if the vector angle pertains to Quadruant 4
-			public: constexpr bool
+			public: constexpr decltype(auto)
 			quadrant4() const
 			requires requires(XT x, YT y)
 			{
@@ -199,7 +199,7 @@ namespace ink {
 			
 			
 			// Return this vector rotated 180 degrees
-			public: constexpr auto
+			public: constexpr decltype(auto)
 			rotate180() const
 			requires requires(XT x, YT y)
 			{
@@ -210,7 +210,7 @@ namespace ink {
 			}
 			
 			// Return this vector rotated 90 degrees. If ClockWise == true, rotation will take place in a clock-wise motion. Counter clockwise otherwise.
-			public: constexpr auto
+			public: constexpr decltype(auto)
 			rotate90(bool ClockWise = false) const
 			requires requires(XT x, YT y)
 			{
@@ -221,7 +221,7 @@ namespace ink {
 			}
 			
 			// Return this vector rotated R radians
-			public: constexpr auto
+			public: constexpr decltype(auto)
 			rotate(long double R) const
 			requires requires(XT x, YT y)
 			{
@@ -237,7 +237,7 @@ namespace ink {
 			}
 			
 			// Absolute angle of this vector in radians.
-			public: constexpr auto
+			public: constexpr decltype(auto)
 			angle() const
 			requires requires(XT x, YT y)
 			{
@@ -248,7 +248,7 @@ namespace ink {
 			}
 			
 			// Dot product
-			public: template<typename OX, typename OY = OX> constexpr auto
+			public: template<typename OX, typename OY = OX> constexpr decltype(auto)
 			dot(const Vector2<OX, OY>& other) const
 			requires( dot_product_exists<OX, OY> )
 			{
@@ -256,7 +256,7 @@ namespace ink {
 			}
 			
 			// Cross product
-			public: template<typename OX, typename OY = OX> constexpr auto
+			public: template<typename OX, typename OY = OX> constexpr decltype(auto)
 			cross(const Vector2<OX, OY>& other) const
 			requires requires(XT x, YT y)
 			{
@@ -269,19 +269,19 @@ namespace ink {
 			
 			
 			// Dot product
-			public: template<typename otherX, typename otherY = otherX> constexpr auto
+			public: template<typename otherX, typename otherY = otherX> constexpr decltype(auto)
 			dot(const Vector2<otherX, otherY>& other) const
 			{ return x * other.x + y * other.y; }
 			
 			// Cross product
-			public: template<typename otherX, typename otherY = otherX> constexpr auto
+			public: template<typename otherX, typename otherY = otherX> constexpr decltype(auto)
 			cross(const Vector2<otherX, otherY>& other) const
 			{ return x * other.y - y * other.x; }
 			
 			
 			
 			// Magnitude of the vector squared. Use if the true magnitude of the vector is unimportant, to save doing the square root with magnitude().
-			public: constexpr auto
+			public: constexpr decltype(auto)
 			magnitude2() const
 			requires( dot_product_exists<> )
 			{
@@ -289,7 +289,7 @@ namespace ink {
 			}
 			
 			// Magnitude of the vector
-			public: constexpr auto
+			public: constexpr decltype(auto)
 			magnitude() const
 			requires( dot_product_exists<> )
 			{
@@ -297,7 +297,7 @@ namespace ink {
 			}
 			
 			// Normalized version of this vector
-			public: constexpr auto
+			public: constexpr decltype(auto)
 			normalize() const requires( dot_product_exists<> ) &&
 			requires(XT x, YT y)
 			{
@@ -314,7 +314,7 @@ namespace ink {
 			}
 			
 			// Normalized version of this vector utilizing an implementation of Q_rsqrt (Quake III's fast reverse square root). Supports increased accuracy at the cost of efficiency.
-			public: inline auto
+			public: inline decltype(auto)
 			q_normalize(size_t extra_iterations) const requires( dot_product_exists<> )
 			{
 				auto rsqrt = Q_rsqrt<decltype(magnitude2())>(magnitude2(),extra_iterations);
@@ -324,7 +324,7 @@ namespace ink {
 			}
 			
 			// Normalized version of this vector utilizing an implementation of Q_rsqrt (Quake III's fast reverse square root).
-			public: inline auto
+			public: inline decltype(auto)
 			q_normalize() const requires( dot_product_exists<> )
 			{
 				auto rsqrt = Q_rsqrt<decltype(magnitude2())>(magnitude2());
@@ -334,7 +334,7 @@ namespace ink {
 			}
 			
 			// Magnitude of the projection of this vector onto the other vector
-			public: template<typename OX, typename OY = OX> constexpr auto
+			public: template<typename OX, typename OY = OX> constexpr decltype(auto)
 			proj_mag(Vector2<OX, OY> const& other) const
 			requires( dot_product_exists<> && dot_product_exists<OX, OY> )
 			{
@@ -342,7 +342,7 @@ namespace ink {
 			}
 			
 			// Projection of this vector onto the other vector
-			public: template<typename OX, typename OY = OX> constexpr auto
+			public: template<typename OX, typename OY = OX> constexpr decltype(auto)
 			proj_vec(Vector2<OX, OY> const& other) const
 			requires( dot_product_exists<> && dot_product_exists<OX, OY> )
 			{
@@ -350,7 +350,7 @@ namespace ink {
 			}
 			
 			// Returns vector aligned with the cardinal direction closest to this vector. That is to say, any of the vectors whose angle in degrees is divisible by 45.
-			public: constexpr auto
+			public: constexpr decltype(auto)
 			cardinal() const requires
 			requires(XT x, YT y)
 			{
